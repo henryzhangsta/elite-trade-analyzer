@@ -30,22 +30,26 @@ def Main(maxJumpDistance):
     currentSystem = systems.filter(lambda x: x['SystemName'] == currentSystemName).collect()[0]
 
     systemsWithStations = sc.broadcast(stationCommodities.map(lambda x: x['SCStationSystem']).distinct().collect())
-    systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < 100).filter(lambda x: x['SystemName'] in systemsWithStations.value)
+    systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < 200).filter(lambda x: x['SystemName'] in systemsWithStations.value)
 
-    systemPairs = systems.cartesian(systems).filter(lambda x: DistanceBetweenSystems(x[0], x[1]) < maxJumpDistance)
+    def CalcSystemDistance(pair):
+        return {
+            'Distance': DistanceBetweenSystems(pair[0], pair[1]),
+            'Systems': pair
+        }
 
-    def TokenizeSystem(systems):
-        a = systems[0]['SystemName']
-        b = systems[1]['SystemName']
+    maxJumpDistance = sc.broadcast(maxJumpDistance)
+    systemPairs = systems.cartesian(systems).map(CalcSystemDistance).filter(lambda x: x['Distance'] < maxJumpDistance.value)
+
+    def TokenizeSystem(systemPair):
+        a = systemPair['Systems'][0]['SystemName']
+        b = systemPair['Systems'][1]['SystemName']
 
         token = min(a, b) + '__' + max(a, b)
 
-        return (token, systems)
+        return (token, systemPair)
 
-    def ReduceSystemPair(x):
-        return (x[0]['SystemName'], x[1]['SystemName'])
-
-    systemPairs = systemPairs.map(TokenizeSystem).reduceByKey(Dedupe).map(lambda x: x[1]).map(ReduceSystemPair)
+    systemPairs = systemPairs.map(TokenizeSystem).reduceByKey(Dedupe).map(lambda x: x[1])
 
     inrangeSystems = sc.broadcast(systems.map(lambda x: x['SystemName']).distinct().collect())
     stationCommodities = stationCommodities.filter(lambda a: a['SCStationSystem'] in inrangeSystems.value)
@@ -73,15 +77,15 @@ def Main(maxJumpDistance):
     stationCommoditiesTable = sc.broadcast(stationCommoditiesTable)
 
     def MapSystemPairToSystems(pair):
-        return ({
-                'Name': pair[0],
-                'Stations': stationCommoditiesTable.value[pair[0]]
+        pair['Systems'] = ({
+                'Name': pair['Systems'][0]['SystemName'],
+                'Stations': stationCommoditiesTable.value[pair['Systems'][0]['SystemName']]
             },
             {
-                'Name': pair[1],
-                'Stations': stationCommoditiesTable.value[pair[1]]
+                'Name': pair['Systems'][1]['SystemName'],
+                'Stations': stationCommoditiesTable.value[pair['Systems'][1]['SystemName']]
             })
-    
+        return pair
 
     systemPairs = systemPairs.map(MapSystemPairToSystems)
 
@@ -116,9 +120,9 @@ def Main(maxJumpDistance):
         } if a_max_profit_commodity != None else None
 
     def BestSystemRoute(pair):
-        station_pairs = GetStationPairs(pair)
-        origin_sys = pair[0]['Name']
-        dest_sys = pair[1]['Name']
+        station_pairs = GetStationPairs(pair['Systems'])
+        origin_sys = pair['Systems'][0]['Name']
+        dest_sys = pair['Systems'][1]['Name']
 
         trade_pairs = []
 
@@ -147,13 +151,14 @@ def Main(maxJumpDistance):
         if len(trade_pairs) > 0:
             max_profit = 0
             best_trade = None
-            for pair in trade_pairs:
-                total_profit = pair[0]['Trade']['Profit'] + pair[1]['Trade']['Profit']
+            for trade_pair in trade_pairs:
+                total_profit = trade_pair[0]['Trade']['Profit'] + trade_pair[1]['Trade']['Profit']
                 if total_profit > max_profit:
                     max_profit = total_profit
-                    best_trade = pair
+                    best_trade = trade_pair
 
             return {
+                'Distance': pair['Distance'],
                 'Trade': best_trade,
                 'Profit': max_profit
             }
@@ -161,14 +166,15 @@ def Main(maxJumpDistance):
             return None
 
     routes = systemPairs.map(BestSystemRoute).filter(lambda a: a != None).map(lambda x: (x['Profit'], x)).sortByKey().map(lambda x: x[1]).collect()
-    print routes
-
-    #print stationCommodities.collect()
-    #print commodities.collect()
+    
+    routes = routes[-50:]
+    routes.reverse()
+    for route in routes:
+        print route
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Determine best trade routes between locations')
-    parser.add_argument('maxjumpdistance', type=int, help='Maximum single jump distance', nargs='?', default=30)
+    parser.add_argument('maxjumpdistance', type=float, help='Maximum single jump distance', nargs='?', default=30)
 
     args = parser.parse_args()
     Main(args.maxjumpdistance)
