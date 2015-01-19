@@ -2,6 +2,10 @@ from pyspark import SparkContext, SparkConf, StorageLevel
 from CSVLoader import CSVLoader
 import re, os, uuid, datetime, json, argparse, math
 
+SystemsBlacklist = [
+    'LHS 3447'
+]
+
 def Dedupe(a, b):
     return a
 
@@ -12,9 +16,9 @@ def Main(maxJumpDistance):
     conf = SparkConf().setMaster('local[8]')
     sc = SparkContext(conf=conf)
 
-    systems = CSVLoader('data/headers/System.hcsv').loadMap(sc, 'data/System.csv')
-    stationCommodities = CSVLoader('data/headers/SC.hcsv').loadMap(sc, 'data/SC.csv')
-    commodities = CSVLoader('data/headers/Commod.hcsv').loadMap(sc, 'data/Commod.csv')
+    systems = CSVLoader('data/headers/System.hcsv').loadMap(sc, 'data/csv/System.csv')
+    stationCommodities = CSVLoader('data/headers/SC.hcsv').loadMap(sc, 'data/csv/SC.csv')
+    commodities = CSVLoader('data/headers/Commod.hcsv').loadMap(sc, 'data/csv/Commod.csv')
 
     def MapSystems(a):
         del a['SystemSize']
@@ -24,13 +28,13 @@ def Main(maxJumpDistance):
         a['SystemZ'] = float(a['SystemZ'])
         return a
 
-    systems = systems.map(MapSystems)
+    systems = systems.map(MapSystems).filter(lambda x: x['SystemName'] not in SystemsBlacklist)
 
-    currentSystemName = 'Brani'
+    currentSystemName = 'Pices'
     currentSystem = systems.filter(lambda x: x['SystemName'] == currentSystemName).collect()[0]
 
     systemsWithStations = sc.broadcast(stationCommodities.map(lambda x: x['SCStationSystem']).distinct().collect())
-    systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < 200).filter(lambda x: x['SystemName'] in systemsWithStations.value)
+    systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < 50).filter(lambda x: x['SystemName'] in systemsWithStations.value)
 
     def CalcSystemDistance(pair):
         return {
