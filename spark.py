@@ -170,10 +170,11 @@ def Main(maxJumpDistance, currentSystemName, searchradius):
         else:
             return None
 
-    routes = systemPairs.map(BestSystemRoute).filter(lambda a: a != None).map(lambda x: (x['Profit'], x)).sortByKey().map(lambda x: x[1]).collect()
+    routes = systemPairs.map(BestSystemRoute).filter(lambda a: a != None).map(lambda x: (x['Profit'], x)).sortByKey(False).map(lambda x: x[1]).collect()
     
-    routes = routes[-50:]
-    routes.reverse()
+    open('output/routes.json', 'w').write(json.dumps(routes))
+
+    routes = routes[:50]
     for route in routes:
         print route
 
