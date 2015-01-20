@@ -14,6 +14,26 @@ Requirements
 + Python 2.7+
 + Data source (EDDB and Slopey's BPC are currently supported)
 
+Note on Spark
+-------------
+
+This is a Spark program, and thus requires Spark. Tips to simplify installation are listed below.
+
+Linux
+-----
+
+It is recommended that you download Apache Spark from Cloudera's repositories. Instructions can be found at [http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cdh_ig_spark_install.html]
+
+Mac
+---
+
+It is recommended to download the `apache-spark` package from Homebrew.
+
+Windows
+-------
+
+Manual installation is required. Download the Pre-Built Spark for Hadoop 2.4+ from [https://spark.apache.org/downloads.html]. On Windows it is also necessary to get the Windows runtimes, which can be downloaded here [http://www.srccodes.com/p/article/39/error-util-shell-failed-locate-winutils-binary-hadoop-binary-path]. Extract these to a folder. Download Hadoop from [https://www.apache.org/dyn/closer.cgi/hadoop/common/] and extract it to that folder, overwriting the older files. Finally, before running Spark, you must set the `%HADOOP_HOME%` environment variable to point at the folder where Hadoop is located.
+
 Usage
 -----
 
