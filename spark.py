@@ -12,7 +12,7 @@ def Dedupe(a, b):
 def DistanceBetweenSystems(a, b):
     return math.sqrt((a['SystemX'] - b['SystemX']) ** 2 + (a['SystemY'] - b['SystemY']) ** 2 + (a['SystemZ'] - b['SystemZ']) ** 2)
 
-def Main(maxJumpDistance):
+def Main(maxJumpDistance, currentSystemName, searchradius):
     conf = SparkConf().setMaster('local[8]')
     sc = SparkContext(conf=conf)
 
@@ -30,11 +30,12 @@ def Main(maxJumpDistance):
 
     systems = systems.map(MapSystems).filter(lambda x: x['SystemName'] not in SystemsBlacklist)
 
-    currentSystemName = 'Pices'
-    currentSystem = systems.filter(lambda x: x['SystemName'] == currentSystemName).collect()[0]
+    if currentSystemName:
+        currentSystem = systems.filter(lambda x: x['SystemName'] == currentSystemName).collect()[0]
+        systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < searchradius)
 
     systemsWithStations = sc.broadcast(stationCommodities.map(lambda x: x['SCStationSystem']).distinct().collect())
-    systems = systems.filter(lambda x: DistanceBetweenSystems(currentSystem, x) < 50).filter(lambda x: x['SystemName'] in systemsWithStations.value)
+    systems = systems.filter(lambda x: x['SystemName'] in systemsWithStations.value)
 
     def CalcSystemDistance(pair):
         return {
@@ -179,6 +180,8 @@ def Main(maxJumpDistance):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Determine best trade routes between locations')
     parser.add_argument('maxjumpdistance', type=float, help='Maximum single jump distance', nargs='?', default=30)
+    parser.add_argument('--currentsystem', type=str, help='Current system for filtering systems based on range', default=None)
+    parser.add_argument('--searchradius', type=float, help='Search radius around current system in light years', default=100)
 
     args = parser.parse_args()
-    Main(args.maxjumpdistance)
+    Main(args.maxjumpdistance, args.currentsystem, args.searchradius)
