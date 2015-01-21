@@ -32,10 +32,7 @@ It is recommended to download the `apache-spark` package from Homebrew.
 Windows
 -------
 
-Manual installation is required.
-Locations listed here are used for simplicity and completely optional. You can use your prefered locations.
-
-Download the Pre-Built Spark for Hadoop 2.4+ from [https://spark.apache.org/downloads.html]. Extract it to "C:\spark". Download Hadoop from [https://www.apache.org/dyn/closer.cgi/hadoop/common/] and extract it to "C:\hadoop". It is also necessary to get the Windows runtimes, which can be downloaded here [http://www.srccodes.com/p/article/39/error-util-shell-failed-locate-winutils-binary-hadoop-binary-path]. Unpack them and copy to "C:\hadoop\bin". Overwrite only older files. Before running Spark, you must set the `%HADOOP_HOME%` environment variable to point at "C:\hadoop". Also add "C:\spark\bin" and "C:\hadoop\bin" to `%Path%` environment variable.
+Manual installation is required. Download the Pre-Built Spark for Hadoop 2.4+ from [https://spark.apache.org/downloads.html]. On Windows it is also necessary to get the Windows runtimes, which can be downloaded here [http://www.srccodes.com/p/article/39/error-util-shell-failed-locate-winutils-binary-hadoop-binary-path]. Extract these to a folder. Download Hadoop from [https://www.apache.org/dyn/closer.cgi/hadoop/common/] and extract it to that folder, overwriting the older files. Finally, before running Spark, you must set the `%HADOOP_HOME%` environment variable to point at the folder where Hadoop is located.
 
 Usage
 -----
