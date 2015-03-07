@@ -2,7 +2,7 @@ import json
 import csv
 
 def WriteSystems(systems, stations):
-    systems_with_station = set([x['system_id'] for x in stations])
+    systems_with_station = {x['system_id'] for x in stations}
 
     with open('data/csv/System.csv', 'w') as csv_file:
         writer = csv.writer(csv_file)
