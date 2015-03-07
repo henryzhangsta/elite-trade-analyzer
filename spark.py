@@ -18,7 +18,6 @@ def Main(maxJumpDistance, currentSystemName, searchradius):
 
     systems = CSVLoader('data/headers/System.hcsv').loadMap(sc, 'data/csv/System.csv')
     stationCommodities = CSVLoader('data/headers/SC.hcsv').loadMap(sc, 'data/csv/SC.csv')
-    commodities = CSVLoader('data/headers/Commod.hcsv').loadMap(sc, 'data/csv/Commod.csv')
 
     def MapSystems(a):
         del a['SystemSize']

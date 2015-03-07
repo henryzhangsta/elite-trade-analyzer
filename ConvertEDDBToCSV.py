@@ -1,12 +1,6 @@
 import json
 import csv
 
-def WriteCommodities(commodities):
-    with open('data/csv/Commod.csv', 'w') as csv_file:
-        writer = csv.writer(csv_file)
-        for commodity in commodities:
-            writer.writerow([commodity['name'], commodity['category']['name'], commodity['average_price']])
-
 def WriteSystems(systems, stations):
     systems_with_station = set([x['system_id'] for x in stations])
 
@@ -72,7 +66,6 @@ if __name__ == '__main__':
     stations = json.loads(open('data/stations.json', 'r').read())
     systems = json.loads(open('data/systems.json', 'r').read())
 
-    WriteCommodities(commodities)
     WriteSystems(systems, stations)
 
     commodity_lookup = {commodity['id']: commodity for commodity in commodities}
